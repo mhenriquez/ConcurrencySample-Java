@@ -21,14 +21,17 @@ public class VowelCounterUI extends JFrame implements ActionListener
 	private JPanel pnlEast;
 	private JPanel pnlSouth;
 	
-	//J
-	private DefaultListModel listModel;
+	JFileChooser fileChooser;
+	
+	//ListofFiles
+	private DefaultListModel<File> model;
+	
+	private File[] filesList;
 	
 	//JLists
-	private JList list1;
-	private JList list2;
+	private JList<File> list1;
+	private JList<File> list2;
 	
-	private JTextArea outputArea; //<-------
 	//ScroolPanes
 	private JScrollPane scroll1;
 	private JScrollPane scroll2;
@@ -98,11 +101,12 @@ public class VowelCounterUI extends JFrame implements ActionListener
 		btnHelp.setPreferredSize(new Dimension(100, 40));
 		btnHelp.addActionListener(this);
 		
-		//JlistModel
-		listModel = new DefaultListModel();
+		model = new DefaultListModel<File>();
+		
 		
 		//Instantiate new list and scroll pane
-		list1 = new JList();
+		list1 = new JList<File>(model);
+		//list1.setVisibleRowCount(4);
 		scroll1 = new JScrollPane(list1, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroll1.setPreferredSize(new Dimension(360, 160));
 		
@@ -145,18 +149,11 @@ public class VowelCounterUI extends JFrame implements ActionListener
 		
 		//If add files button is clicked...
 		if(source == btnAddFiles){
-			Thread addFiles = new Thread(new Runnable(){
-
-				@Override
-				public void run() {
-					// TODO Auto-generated method stub
-					try {
-						analyzePath();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-			});
+			try {
+				analyzePath();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 		
 		//If process button is clicked...
@@ -168,7 +165,7 @@ public class VowelCounterUI extends JFrame implements ActionListener
 		if(source == btnClear){
 			list1.removeAll();
 			list2.removeAll();
-			listModel.clear();
+			model.clear();
 		}
 		
 		//If help button is clicked...
@@ -192,41 +189,55 @@ public class VowelCounterUI extends JFrame implements ActionListener
 		//Get path to user-selected file or directory
 		Path path = getFileOrDirectoryPath();
 		
-		
-		
-		
-		
-		
-		
-		
 		//If path exists, display info
 		if(path != null && Files.exists(path)){
 			//Gather file or directory information
-			StringBuilder builder = new StringBuilder();
 			
-			builder.append(String.format("%s:%n", path.getFileName()));
-			builder.append(String.format("%s a directory%n", Files.isDirectory(path) ? "Is" : "Is not"));
-			builder.append(String.format("%s an absolute path%n", path.isAbsolute() ? "Is" : "Is not"));
-			builder.append(String.format("Last Modified: %s%n", Files.getLastModifiedTime(path)));
-			builder.append(String.format("Size: %s%n", Files.size(path)));
-			builder.append(String.format("Path: %s%n", path));
-			builder.append(String.format("Absolute path: %s%n", path.toAbsolutePath()));
+			filesList = fileChooser.getSelectedFiles();
 			
-			//Output directory listing
-			if(Files.isDirectory(path)){
-				//
-				builder.append(String.format("%nDirectory contents:%n"));
-				//
-				//Object for iterating through a directory's contents
-				DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path);
-				//
-				for(Path p : directoryStream){
-					builder.append(String.format("%s%n", path));
-				}
+			//Iterate through selected files and add to model
+			for(int i=0; i<filesList.length; ++i){
+				model.add(i, filesList[i]);
 			}
-			//Display string content
-			outputArea.setText(builder.toString());
+			list1.setModel(model);
+
+			//Output directory listing
+//			if(Files.isDirectory(path)){
+//				//Object for iterating through a directory's contents
+//				DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path);
+//				
+//				File folder = new File(path.toString());
+//	            filesList = folder.listFiles(new TextFileFilter());
+//	            
+//	            //Iterate through selected files and add to model
+//				for(int i=0; i<filesList.length; ++i){
+//					model.add(i, filesList[i]);
+//				}
+//				list1.setModel(filesList.length);
+//				
+//				
+//				//Iterate through directory
+//				for(Path p : directoryStream){
+//					//TODO
+//					File folder = new File(p.toFile().toString());
+//					filesList = folder.listFiles(new TextFileFilter());
+//					model.addElement(p.toFile());
+//					//Iterate through selected files and add to model
+//					for(int i=0; i<filesList.length; ++i){
+//						model.add(i, filesList[i]);
+//					}
+//				}
+//				list1.setModel(model);
+//			}
 			
+//			StringBuilder builder = new StringBuilder();
+//			builder.append(String.format("%s:%n", path.getFileName()));
+//			builder.append(String.format("%s a directory%n", Files.isDirectory(path) ? "Is" : "Is not"));
+//			builder.append(String.format("%s an absolute path%n", path.isAbsolute() ? "Is" : "Is not"));
+//			builder.append(String.format("Last Modified: %s%n", Files.getLastModifiedTime(path)));
+//			builder.append(String.format("Size: %s%n", Files.size(path)));
+//			builder.append(String.format("Path: %s%n", path));
+//			builder.append(String.format("Absolute path: %s%n", path.toAbsolutePath()));
 		}
 	}
 	
@@ -236,9 +247,9 @@ public class VowelCounterUI extends JFrame implements ActionListener
 	 */
 	private Path getFileOrDirectoryPath(){
 		//Configure dialog allowing selection of a file or directory
-		JFileChooser fileChooser = new JFileChooser();
+		fileChooser = new JFileChooser();
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-		//fileChooser.setMultiSelectionEnabled(true);
+		fileChooser.setMultiSelectionEnabled(true);
 		
 		int result = fileChooser.showOpenDialog(this);
 		
@@ -247,15 +258,12 @@ public class VowelCounterUI extends JFrame implements ActionListener
 			return null;
 		}
 		
-		
-		
-		
 		//Return Path representing the selected file
-		return fileChooser.getSelectedFile().toPath();
+		return fileChooser.getCurrentDirectory().toPath();	
 	}
 	
 	public int countVowels(Object file){
-		
+		//TODO method that counts vowels in text file
 		return 0;
 	}
 }
