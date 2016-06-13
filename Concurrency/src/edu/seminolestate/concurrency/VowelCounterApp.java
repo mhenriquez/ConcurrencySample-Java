@@ -2,6 +2,12 @@ package edu.seminolestate.concurrency;
 
 import javax.swing.*;
 
+/**
+ * 
+ * @author Moises Henriquez
+ * @date June 12, 2016
+ * 
+ */
 public class VowelCounterApp {
 
 	public static void main(String[] args) {
